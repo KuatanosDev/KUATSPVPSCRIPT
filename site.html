@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Display</title>
+    <style>
+        body {
+            background-color: white;
+            color: black;
+            font-family: monospace;
+            white-space: pre-wrap;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
+
+-- Настройки сохранения
+local settingsFile = "userSettings.json"
+local settings = {}
+
+local function saveSettings()
+    local json = HttpService:JSONEncode(settings)
+    writefile(settingsFile, json)
+end
+
+local function loadSettings()
+    if isfile(settingsFile) then
+        local json = readfile(settingsFile)
+        settings = HttpService:JSONDecode(json)
+    else
+        settings = {
+            fpsVisible = false,
+            pingVisible = false,
+            joinLoggerEnabled = false,
+            coordsVisible = false,
+        }
+        saveSettings()
+    end
+end
+
+loadSettings()
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.ResetOnSpawn = false
+screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 600, 0, 400)
+mainFrame.Position = UDim2.new(0.5, -300, 0.5, -200)
+mainFrame.BackgroundColor3 = Color3.new(0, 0, 0)
+mainFrame.Active = true
+mainFrame.Draggable = true
+mainFrame.Parent = screenGui
+
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, 0, 0, 50)
+titleLabel.Position = UDim2.new(0, 0, 0, 0)
+titleLabel.BackgroundColor3 = Color3.new(0, 0, 0)
+titleLabel.BorderColor3 = Color3.new(1, 1, 1)
+titleLabel.Text = "KuatanosPVPscript"
+titleLabel.TextColor3 = Color3.new(1, 1, 1)
+titleLabel.Parent = mainFrame
+
+local function createButton(text, position)
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(0, 150, 0, 50)
+    button.Position = position
+    button.BackgroundColor3 = Color3.new(0, 0, 0)
+    button.BorderColor3 = Color3.new(1, 1, 1)
+    button.Text = text
+    button.TextColor3 = Color3.new(1, 1, 1)
+    button.Parent = mainFrame
+    return button
+end
+
+local fpsButton = createButton("ShowFPS", UDim2.new(0, 25, 0, 75))
+local pingButton = createButton("ShowPing", UDim2.new(0, 25, 0, 150))
+local joinLoggerButton = createButton("Join Logger", UDim2.new(0, 25, 0, 225))
+local coordsButton = createButton("Show Coordinates", UDim2.new(0, 25, 0, 300))
+
+local fpsLabel = Instance.new("TextLabel")
+fpsLabel.Size = UDim2.new(0, 200, 0, 50)
+fpsLabel.Position = UDim2.new(0, 25, 0, 350)
+fpsLabel.BackgroundTransparency = 0.5
+fpsLabel.BackgroundColor3 = Color3.new(0, 0, 0)
+fpsLabel.TextColor3 = Color3.new(1, 1, 1)
+fpsLabel.Visible = settings.fpsVisible
+fpsLabel.Parent = screenGui
+
+local pingLabel = Instance.new("TextLabel")
+pingLabel.Size = UDim2.new(0, 200, 0, 50)
+pingLabel.Position = UDim2.new(0, 25, 0, 425)
+pingLabel.BackgroundTransparency = 0.5
+pingLabel.BackgroundColor3 = Color3.new(0, 0, 0)
+pingLabel.TextColor3 = Color3.new(1, 1, 1)
+pingLabel.Visible = settings.pingVisible
+pingLabel.Parent = screenGui
+
+local coordsLabel = Instance.new("TextLabel")
+coordsLabel.Size = UDim2.new(0, 200, 0, 50)
+coordsLabel.Position = UDim2.new(0, 25, 0, 500)
+coordsLabel.BackgroundTransparency = 0.5
+coordsLabel.BackgroundColor3 = Color3.new(0, 0, 0)
+coordsLabel.TextColor3 = Color3.new(1, 1, 1)
+coordsLabel.Visible = settings.coordsVisible
+coordsLabel.Parent = screenGui
+
+local joinLoggerEnabled = settings.joinLoggerEnabled
+
+local function showNotification(text)
+    local notification = Instance.new("TextLabel")
+    notification.Size = UDim2.new(0, 200, 0, 50)
+    notification.Position = UDim2.new(1, -225, 1, -75)
+    notification.BackgroundTransparency = 0.5
+    notification.BackgroundColor3 = Color3.new(0, 0, 0)
+    notification.TextColor3 = Color3.new(1, 1, 1)
+    notification.Text = text
+    notification.Parent = screenGui
+
+    wait(5)
+    notification:Destroy()
+end
+
+fpsButton.MouseButton1Click:Connect(function()
+    settings.fpsVisible = not settings.fpsVisible
+    fpsLabel.Visible = settings.fpsVisible
+    saveSettings()
+end)
+
+pingButton.MouseButton1Click:Connect(function()
+    settings.pingVisible = not settings.pingVisible
+    pingLabel.Visible = settings.pingVisible
+    saveSettings()
+end)
+
+joinLoggerButton.MouseButton1Click:Connect(function()
+    settings.joinLoggerEnabled = not settings.joinLoggerEnabled
+    joinLoggerEnabled = settings.joinLoggerEnabled
+    saveSettings()
+end)
+
+coordsButton.MouseButton1Click:Connect(function()
+    settings.coordsVisible = not settings.coordsVisible
+    coordsLabel.Visible = settings.coordsVisible
+    saveSettings()
+end)
+
+Players.PlayerAdded:Connect(function(player)
+    if joinLoggerEnabled then
+        showNotification(player.DisplayName .. " joined")
+    end
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+    if joinLoggerEnabled then
+        showNotification(player.DisplayName .. " left")
+    end
+end)
+
+UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.K then
+        mainFrame.Visible = not mainFrame.Visible
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    if fpsLabel.Visible then
+        local fps = math.floor(1 / RunService.RenderStepped:Wait())
+        fpsLabel.Text = "FPS: " .. fps
+    end
+
+    if pingLabel.Visible then
+        local ping = math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue())
+        pingLabel.Text = "Ping: " .. ping .. " ms"
+    end
+
+    if coordsLabel.Visible then
+        local player = game.Players.LocalPlayer
+        if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local pos = player.Character.HumanoidRootPart.Position
+            coordsLabel.Text = string.format("Coordinates: (%.2f, %.2f, %.2f)", pos.X, pos.Y, pos.Z)
+        end
+    end
+end)
+</body>
+</html>
